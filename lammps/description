@@ -1,0 +1,33 @@
+<h1>LAMMPS</h1>
+
+<p> Category:  Science Apps-Molecular Dynamics
+
+<h2>Description</h2>
+<p>
+<a href="http://lammps.sandia.gov/">LAMMPS</a> stands for Large-scale 
+Atomic/Molecular Massively Parallel Simulator. 
+It has potentials for soft materials (biomolecules, polymers) and solid-state 
+materials (metals, semiconductors) and coarse-grained systems. It can be used 
+to model atoms or, more generically, as a parallel particle simulator at the 
+mesoscale or continuum levels. 
+<p>
+Further information on LAMMPS can be found on
+<a href="http://lammps.sandia.gov/">LAMMPS website.</a>
+
+<h2>Use</h2>
+
+<p>
+LAMMPS is available as a <a href="/computing-resources/modules">module</a>.
+The modulefile for LAMMPS sets up the necessary environmental variables
+for LAMMPS and updates PATH to include LAMMPS executables.
+
+<p>
+The executable <b>lmp_xc30</b> is available upon loading of the module
+and may be used inside
+<a href="/computing-resources/darter/running_jobs#batch-scripts">
+job submission scripts</a>:
+
+<pre>
+module load lammps
+aprun -n [nprocs] lmp_xc30 [other arguments]
+</pre>

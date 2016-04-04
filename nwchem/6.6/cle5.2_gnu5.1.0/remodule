@@ -1,0 +1,53 @@
+  ### Set Environment (do not remove this line only change what is in between)
+  . ${MODULESHOME}/init/ksh
+  module unload PrgEnv-pgi
+  module unload PrgEnv-cray
+  module unload PrgEnv-gnu
+  module load PrgEnv-gnu
+  module swap gcc gcc/5.1.0
+  ### End Environment (do not remove this line only change what is in between)
+
+module unload darshan
+module load onesided
+
+PACKAGE=nwchem
+VERSION=6.6
+SRCDIR=${PACKAGE}-${VERSION}
+DISTNAME=Nwchem-6.6.revision27746-src.2015-10-20
+
+export NWCHEM_TOP=${SW_BLDDIR}/${SRCDIR}
+
+export NWCHEM_MODULES=all
+export NWCHEM_TARGET=LINUX64
+export ARMCI_NETWORK=MPI-PR
+export USE_MPI=y
+export USE_MPIF=y
+export USE_MPIF4=y
+export LARGE_FILES=TRUE
+export USE_NOFSCHECK=TRUE
+export LIBMPI=""
+
+export  NWCHEM_LONG_PATHS=Y      #-- allow longer than 64 characters limit to N
+
+export HAS_BLAS=yes
+export BLASOPT="-lsci_gnu" #-- Required otherwise nwchem config fail
+export BLAS_LIB="-lsci_gnu"
+export LAPACK_LIB="-lsci_gnu"
+
+export USE_SCALAPACK=y
+export SCALAPACK_LIB="-lsci_gnu" #-- Required otherwise nwchem config fail
+export SCALAPACK="-lsci_gnu"
+
+export USE_64TO32=y
+
+#-- Workaround for PE15.09 bugs with cray-ga
+export PE_PKGCONFIG_LIBS=cray-dmapp:${PE_PKGCONFIG_LIBS}
+
+export CC=cc
+export CXX=CC
+export F77=ftn
+export F90=ftn
+export F9C=ftn
+export F9X=ftn
+export F03=ftn
+export FC=ftn

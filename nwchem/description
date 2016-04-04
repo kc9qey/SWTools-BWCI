@@ -1,0 +1,39 @@
+<h1>NWChem</h1>
+
+<p> Category: Science Apps-Chemistry 
+
+<h2>Description</h2>
+
+<p>NWChem is a computational chemistry package that is designed to run on 
+high-performance parallel supercomputers as well as conventional workstation 
+clusters. It aims to be scalable both in its ability to treat large problems 
+efficiently, and in its usage of available parallel computing resources. NWChem 
+has been developed by the Molecular Sciences Software group of the 
+Environmental Molecular Sciences Laboratory (EMSL) at the Pacific Northwest 
+National Laboratory (PNNL). Most of the implementation has been funded by the 
+EMSL Construction Project. <a 
+href="http://www.emsl.pnl.gov/docs/nwchem/nwchem.html">See the NWChem Home 
+Page</a>. 
+ 
+<h2>Use</h2>
+
+<p> In order to use NWChem, the following environment variables should be 
+properly set:
+
+<ul>
+<li>$NWCHEM_BASIS_LIBRARY, must point the binary toward the location for the 
+basis set library when doing abi initio electronic structure calculations.
+<li>$HOME_NWCHEMRC, points the binary toward the location of a file named 
+.nwchemrc.
+<li>$NWCHEM_NWPW_LIBRARY, must point the binary toward the location for the 
+basis set library when doing sudopotential calculations.
+</ul> 
+
+<p>These three variables are automatically set in the nwchem module.</p>
+
+<pre>
+module load nwchem
+
+aprun -n [number of cores] -S [number of cores per Socket] nwchem [input file] 
+> [output file]
+</pre>

@@ -1,0 +1,91 @@
+#!/bin/ksh
+
+############################## standard interface to /sw tools
+# Input:
+#   Environment variables
+#     SW_BLDDIR    current directory (PWD) minus /autofs/na1_ stuff
+#     SW_ENVFILE   file to be sourced which has alternate prog environment
+#                     only to be used in special circumstances
+#     SW_WORKDIR   unique work dir that local script can use
+# Output
+#   Return code of 0=success or 1=failure 
+##############################
+
+# exit 3 is a signal to the sw infrastructure that this template has not 
+# been updated; please delete it when ready
+
+if [ -z $SW_BLDDIR ]; then
+  echo "Error: SW_BLDDIR not set!"
+  exit 1
+else
+  cd $SW_BLDDIR
+fi
+
+if [ -z $SW_ENVFILE ]; then
+  ### Set Environment (do not remove this line only change what is in between)
+  . ${MODULESHOME}/init/ksh
+  . ${SW_BLDDIR}/remodule
+  ### End Environment (do not remove this line only change what is in between)
+else
+  . $SW_ENVFILE
+fi
+
+############################## app specific section
+#  
+set -o verbose
+# clear out old installation to prevent potential libtool chmod 
+# commands from failing when reinstalled by another person
+rm -rf bin lib include doc share man etc libexec info data
+
+#clear out status and old SRCDIR file since re-making
+rm -f status
+rm -rf $SRCDIR $DISTNAME
+
+#-- NWCHEM tarball use uppercase on first letter, but all lower in the source 
+DISTNAME_TARBALL="$(tr '[:lower:]' '[:upper:]' <<< ${DISTNAME:0:1})${DISTNAME:1}"
+tar xf /sw/sources/${PACKAGE}/${VERSION}/${DISTNAME_TARBALL}.tar.bz2 \
+--transform "s/${DISTNAME}/$SRCDIR/"
+
+cd $SRCDIR/src
+
+make nwchem_config
+if [ $? -ne 0 ] ; then
+  echo "$PACKAGE configure failed"
+  exit 1
+fi
+
+make 64_to_32
+
+make FC=ftn
+if [ $? -ne 0 ] ; then
+  echo "$PACKAGE build failed"
+  exit 1
+fi
+
+#-- Install
+
+mkdir ${SW_BLDDIR}/bin
+mkdir ${SW_BLDDIR}/data
+mkdir ${SW_BLDDIR}/etc
+cp $NWCHEM_TOP/bin/${NWCHEM_TARGET}/nwchem ${SW_BLDDIR}/bin
+chmod o+rx ${SW_BLDDIR}/bin/nwchem
+
+cp -a ${SW_BLDDIR}/${SRCDIR}/src/basis/libraries ${SW_BLDDIR}/data
+cp -a ${SW_BLDDIR}/${SRCDIR}/src/data/* ${SW_BLDDIR}/data
+cp -r ${SW_BLDDIR}/${SRCDIR}/src/nwpw/libraryps ${SW_BLDDIR}/data
+
+cat << EOF > ${SW_BLDDIR}/etc/nwchemrc
+nwchem_basis_library ${SW_BLDDIR}/data/libraries/
+nwchem_nwpw_library ${SW_BLDDIR}/data/libraryps/
+ffield amber
+amber_1 ${SW_BLDDIR}/data/amber_s/
+amber_2 ${SW_BLDDIR}/data/amber_q/
+amber_3 ${SW_BLDDIR}/data/amber_x/
+amber_4 ${SW_BLDDIR}/data/amber_u/
+spce    ${SW_BLDDIR}/data/solvents/spce.rst
+charmm_s ${SW_BLDDIR}/data/charmm_s/
+charmm_x ${SW_BLDDIR}/data/charmm_x/
+EOF
+
+############################### if this far, return 0
+exit 0

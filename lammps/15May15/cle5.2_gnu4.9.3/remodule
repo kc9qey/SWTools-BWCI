@@ -1,0 +1,26 @@
+  ### Set Environment (do not remove this line only change what is in between)
+  . ${MODULESHOME}/init/ksh
+  module unload PrgEnv-pgi
+  module unload PrgEnv-cray
+  module unload PrgEnv-gnu
+  module load PrgEnv-gnu
+  module swap gcc gcc/4.9.3
+  ### End Environment (do not remove this line only change what is in between)
+  
+# load any other dependent modules here
+
+module load fftw
+# env vars here
+
+PACKAGE=lammps
+VERSION=15May15
+SRCDIR=${PACKAGE}-${VERSION}
+
+# these may need to go up in the special section between ###
+export CC=cc
+export CXX=CC
+export F77=ftn
+export F90=ftn
+export F9C=ftn
+export F9X=ftn
+export FC=ftn

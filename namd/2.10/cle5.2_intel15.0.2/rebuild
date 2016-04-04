@@ -1,0 +1,139 @@
+#!/bin/ksh
+
+############################## standard interface to /sw tools
+# Input:
+#   Environment variables
+#     SW_BLDDIR    current directory (PWD) minus /autofs/na1_ stuff
+#     SW_ENVFILE   file to be sourced which has alternate prog environment
+#                     only to be used in special circumstances
+#     SW_WORKDIR   unique work dir that local script can use
+# Output
+#   Return code of 0=success or 1=failure 
+##############################
+
+if [ -z $SW_BLDDIR ]; then
+  echo "Error: SW_BLDDIR not set!"
+  exit 1
+else
+  cd $SW_BLDDIR
+fi
+
+if [ -z $SW_ENVFILE ]; then
+  ### Set Environment (do not remove this line only change what is in between)
+  . ${MODULESHOME}/init/ksh
+  . ${SW_BLDDIR}/remodule
+  ### End Environment (do not remove this line only change what is in between)
+else
+  . $SW_ENVFILE
+fi
+
+############################## app specific section
+#  
+set -o verbose
+# clear out old installation to prevent potential libtool chmod 
+# commands from failing when reinstalled by another person
+rm -rf bin lib include man
+rm -rf tcl* $NAMD_SRCDIR
+#clear out status file since re-making
+rm -f status
+
+#-- Build TCL first since NAMD depends on TCL. Do not use other TCL version
+tar -xzf /sw/sources/namd/${NAMD_VER}/tcl${TCL_VER}-src.tar.gz
+cd tcl*/unix
+#-- Apply patch for TCL to work on Cray XE
+patch -p0 < /sw/sources/namd/${NAMD_VER}/tcl${TCL_VER}-crayxe-tclUnixInit.patch
+./configure CC=icc --prefix=$SW_BLDDIR --disable-shared
+make
+  if [ $? -ne 0 ] ; then
+    echo "TCL make failed"
+    exit 1
+  fi
+make install
+  if [ $? -ne 0 ] ; then
+    echo "TCL make install failed"
+    exit 1
+  fi
+
+cd $SW_BLDDIR
+
+tar -xzf /sw/sources/namd/${NAMD_VER}/${NAMD_SRCDIR}.tar.gz
+
+cd $NAMD_SRCDIR
+
+tar -xf ${CHARM_SRCDIR}.tar
+rm -f ${CHARM_SRCDIR}.tar
+
+cd $CHARM_SRCDIR
+
+#-- Apply patch for charm++ bug triggered to new release of craype 2015-09
+#   This patch came from https://charm.cs.illinois.edu/redmine/issues/841
+cat > fix_gethugepagesize.patch << EOF
+diff --git a/src/arch/gni/Makefile.machine b/src/arch/gni/Makefile.machine
+index c9652c9..b7a19ad 100644
+--- a/src/arch/gni/Makefile.machine
++++ b/src/arch/gni/Makefile.machine
+@@ -9,8 +9,5 @@ charm++: hybridAPI
+ .PHONY: hybridAPI
+ endif
+ 
+-\$(L)/libconv-cplus-n.a: machine.h machine.c machine-common-core.c machine-broadcast.c machine-lrts.h machine-pxshm.c machine-xpmem.c machine-persistent.c machine-commthd-util.c machine-smp.c pcqueue.h  \$(L)/cray_tlbhack.o
+-
+-\$(L)/cray_tlbhack.o: cray_tlbhack.c
+-	\$(CHARMC) -o \$@ cray_tlbhack.c
++\$(L)/libconv-cplus-n.a: machine.h machine.c machine-common-core.c machine-broadcast.c machine-lrts.h machine-pxshm.c machine-xpmem.c machine-persistent.c machine-commthd-util.c machine-smp.c pcqueue.h
+ 
+diff --git a/src/scripts/charmc b/src/scripts/charmc
+index 21fb325..88676b4 100755
+--- a/src/scripts/charmc
++++ b/src/scripts/charmc
+@@ -853,12 +853,6 @@ if [ -n "\$CHARMDEBUG" -a -z "\$SEQUENTIAL" -a -z "\$NATIVE" ]; then
+     	OPTS_CPP="\$OPTS_CPP -O0 -g"
+ fi
+ 
+-if [ -z "\$NATIVE" -a -n "\$UGNI_CFLAGS" ]
+-then
+-    linkopt=\`env | grep  "HUGETLB[0-9]*[MKG]_POST_LINK_OPTS" 2> /dev/null\`
+-    test -z "\$linkopt" && POST_LIBRARIES=\`AddList \$POST_LIBRARIES \$CHARMLIB/cray_tlbhack.o\`
+-fi
+-
+ PROCESSED_MODULES=""
+ 
+ if [ "\$WERROR" = "1" ]
+EOF
+
+patch -p1 < fix_gethugepagesize.patch
+
+./build charm++ mpi-crayxc --no-build-shared --with-production
+
+cd ${SW_BLDDIR}/${NAMD_SRCDIR}
+
+rm -rf CRAY-XC-intel
+
+./config CRAY-XC-intel --with-tcl --tcl-prefix $SW_BLDDIR \
+--with-fftw3  --fftw-prefix $FFTW3_DIR \
+--charm-base ${SW_BLDDIR}/${NAMD_SRCDIR}/${CHARM_SRCDIR} \
+--charm-arch mpi-crayxc
+#-- specifying CC/cc causes segfault
+#--charm-arch mpi-crayxc --cxx CC --cc cc
+
+cd CRAY-XC-intel
+
+make veryclean
+
+make
+  if [ $? -ne 0 ] ; then
+    echo "$PACKAGE make failed"
+    exit 1
+  fi
+
+mkdir $SW_BLDDIR/bin
+cp namd2 $SW_BLDDIR/bin
+cp charmrun $SW_BLDDIR/bin
+cp flipbinpdb $SW_BLDDIR/bin
+cp flipdcd $SW_BLDDIR/bin
+cp psfgen $SW_BLDDIR/bin
+
+cd ../
+
+############################### if this far, return 0
+exit 0

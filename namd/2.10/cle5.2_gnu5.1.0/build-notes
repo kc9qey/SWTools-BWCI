@@ -1,0 +1,43 @@
+Comments on NAMD 2.10b1 on Cray XC (Reuben Budiardja, 2014-10-02)
+-------------------------------------------------------------------
+NAMD 2.10b1 provides config for Cray XC with Intel compiler only as:
+"./config CRAY-XC-intel". However upon testing the GNU build is still 
+faster than the Intel build, therefore it's the one used. Intel build is
+left as reference. In the GNU build the config is still 
+"./config CRAY-XT-g++" but this is just a name; Don't be confuse with the XT
+reference, it means nothing since CHARM++ used for the parallelization
+correctly uses crayxc profile. 
+
+
+Build Notes for NAMD 2.9 on Cray XE (Reuben Budiardja, 2014-01-30)
+-------------------------------------------------------------------
+
+The following is needed to build NAMD 2.9 correctly (avoiding seg faults)
+on XE with Cray's Jan 2014 PE Release, GCC 4.8.2
+
+1. Untar TCL 8.5.9, apply the CrayXE patch for 8.5.9 to avoid getpwuid
+during initialization (this causes segfault, see 
+http://www.ks.uiuc.edu/Research/namd/mailing_list/namd-l.2010-2011/3577.html)
+The patch is in /sw/sources/namd/2.9 directory, and can be downloaded again
+from the following if necessary
+http://www.ks.uiuc.edu/Research/namd/libraries/tcl8.5.9-crayxe-tclUnixInit.patch
+
+1b. Do not set CC=cc for building TCL. You'll get errors with incompatible
+memcpy, etc. Build it with 'gcc' instead (set CC=gcc)
+
+2. When building charm++, don't use "--with-production" flag. For some
+reason this flag causes crashes of charm++ with this version of NAMD
+Build Charm++ with:
+./build charm++ mpi-crayxe --no-build-shared
+
+3. Don't specify --cxx and --cc flag in the config line of NAMD as they
+causes seg fault (not sure why). Use the following:
+
+./config CRAY-XT-g++ --with-tcl --tcl-prefix $SW_BLDDIR \
+--with-fftw3  --fftw-prefix $CRAY_FFTW_DIR/interlagos \
+--charm-base ${SW_BLDDIR}/${NAMD_SRCDIR}/${CHARM_SRCDIR} \
+--charm-arch mpi-crayxe
+
+All of these are embodied in the rebuild script, and documented here for
+future references.
+

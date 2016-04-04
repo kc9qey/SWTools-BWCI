@@ -1,0 +1,122 @@
+#!/bin/ksh
+
+############################## standard interface to /sw tools
+# Input:
+#   Environment variables
+#     SW_BLDDIR    current directory (PWD) minus /autofs/na1_ stuff
+#     SW_ENVFILE   file to be sourced which has alternate prog environment
+#                     only to be used in special circumstances
+#     SW_WORKDIR   unique work dir that local script can use
+# Output
+#   Return code of 0=success or 1=failure 
+##############################
+
+
+if [ -z $SW_BLDDIR ]; then
+  echo "Error: SW_BLDDIR not set!"
+  exit 1
+else
+  cd $SW_BLDDIR
+fi
+
+if [ -z $SW_ENVFILE ]; then
+  ### Set Environment (do not remove this line only change what is in between)
+  . ${MODULESHOME}/init/ksh
+  . ${SW_BLDDIR}/remodule
+  ### End Environment (do not remove this line only change what is in between)
+else
+  . $SW_ENVFILE
+fi
+
+############################## app specific section
+#  
+set -o verbose
+# clear out old installation to prevent potential libtool chmod 
+# commands from failing when reinstalled by another person
+rm -rf bin lib include doc share man etc libexec info
+
+#clear out status file since re-making
+rm -f status
+rm -rf $SRCDIR
+
+tar -xf /sw/sources/${PACKAGE}/${VERSION}/${PACKAGE}_stable.tar.gz
+cd $SRCDIR
+
+cd src/MAKE
+
+cat > Makefile.xc30 << EOF
+SHELL = /bin/sh
+.SUFFIXES: .cpp .d
+CC =            CC
+CCFLAGS =       -O3 -ffast-math -fstrict-aliasing -fomit-frame-pointer -finline-functions
+SHFLAGS =       -fPIC
+DEPFLAGS =      -M
+LINK =          CC
+LINKFLAGS =     -O
+LIB =           -lquadmath
+SIZE =          size
+ARCHIVE =       ar
+ARFLAGS =       -rc
+SHLIBFLAGS =    -shared
+LMP_INC =       -DLAMMPS_GZIP
+MPI_INC =       -DMPICH_SKIP_MPICXX
+MPI_PATH =
+MPI_LIB =
+FFT_INC =       -DFFT_FFTW3
+FFT_PATH =
+FFT_LIB = 
+JPG_INC =
+JPG_PATH =
+JPG_LIB = 
+EOF
+
+tail -n 43 Makefile.xt5 >> Makefile.xc30
+cd ..
+
+# Adding all packages
+make yes-all
+make no-gpu
+make no-kim
+make no-voronoi
+make no-user-atc
+make no-user-awpmd
+make no-user-cuda
+make no-user-molfile
+make no-user-qmmm
+
+make package-status
+cd ..
+
+cd lib/meam
+make -f Makefile.gfortran
+
+cd ../reax
+make -f Makefile.gfortran
+
+cd ../poems
+make -f Makefile.g++
+
+cd ../colvars
+make -f Makefile.g++
+
+cd ../../src
+
+#-- Delete line 203 & 221, they are bugs (see build-notes, also see
+#   http://lammps.sandia.gov/threads/msg41047.html)
+sed -i '203d;221d' pair_adp_omp.cpp
+
+# Building lammps
+
+make xc30
+  if [ $? -ne 0 ] ; then
+    echo "$PACKAGE make failed"
+    exit 1
+  fi
+
+mkdir $SW_BLDDIR/bin
+cp lmp_xc30  ${SW_BLDDIR}/bin
+
+cd ../
+
+############################### if this far, return 0
+exit 0

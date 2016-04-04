@@ -1,0 +1,112 @@
+#!/bin/ksh
+
+############################## standard interface to /sw tools
+# Input:
+#   Environment variables
+#     SW_BLDDIR    current directory (PWD) minus /autofs/na1_ stuff
+#     SW_ENVFILE   file to be sourced which has alternate prog environment
+#                     only to be used in special circumstances
+#     SW_WORKDIR   work dir that local script can use
+# Output:
+#   Return code of 0=success or 1=failure   or 2=job submitted
+#
+# Notes:
+#   If this script is called from swtest, then swtest requires 
+#   SW_WORKDIR to be set.  Then swtest adds a unique path to what 
+#   user gave swtest (action+timestamp+build) and provides this
+#   script with a uniquely valued SW_WORKDIR.  swtest will
+#   automatically remove this unique workspace when retest is done.
+##################################################################
+
+
+if [ -z $SW_BLDDIR ]; then
+  echo "Error: SW_BLDDIR not set!"
+  exit 1
+else
+  cd $SW_BLDDIR
+fi
+
+if [ -z $SW_ENVFILE ]; then
+  ### Set Environment (do not remove this line only change what is in between)
+  . ${MODULESHOME}/init/ksh
+  . ${SW_BLDDIR}/remodule
+  ### End Environment (do not remove this line only change what is in between)
+else
+  . $SW_ENVFILE
+fi
+          
+############################## app specific section
+#  
+set -o verbose
+
+#clear out status file
+rm -f status
+
+cp -a $NWCHEM_TOP/QA/* $SW_WORKDIR/
+
+cp -a $SW_BLDDIR/data $SW_WORKDIR/
+cp -a $SW_BLDDIR/etc $SW_WORKDIR/
+
+cd $SW_WORKDIR
+
+cat > ${PACKAGE}.pbs << EOF
+#!/bin/bash
+#PBS -N ${PACKAGE}
+#PBS -j oe
+#PBS -l size=128,walltime=12:00:00   
+#PBS -A UT-SUPPORT
+#PBS -W group_list=install
+#PBS -W umask=002
+
+cd \$PBS_O_WORKDIR
+
+export PATH=${SW_BLDDIR}/bin:\${PATH}
+export NWCHEM_EXECUTABLE=${SW_BLDDIR}/bin/nwchem
+export NWCHEM_TOP=${NWCHEM_TOP}
+export NWCHEM_TARGET=LINUX64
+export MPIRUN_PATH=\`which aprun\`
+export MPIRUN_NPOPT=-n
+
+export NWCHEM_NWPW_LIBRARY=${SW_WORKDIR}/data/libraryps/
+export NWCHEM_BASIS_LIBRARY=${SW_WORKDIR}/data/libraries/
+export HOME_NWCHEMRC=${SW_WORKDIR}/etc
+
+
+#-- An abridged version of tests taken from doqmtests.mpi
+./runtests.mpi.unix procs 16 auh2o autosym dft_he2+ h2mp2 h2o hess_h2o prop_h2o 2>&1 | tee -a test.log
+./runtests.mpi.unix procs 64 dft_feco5 | tee -a test.log
+./runtests.mpi.unix procs 128 dft_siosi3 | tee -a test.log
+
+nFailed=\`grep "failed" test.log | wc -l\`
+nOK=\`grep "OK" test.log | grep verifying | wc -l\`
+
+echo "Number of Failed Tests:" \$nFailed
+echo "Number of Passed Tests:" \$nOK
+
+if [[ "\$nFailed" -gt "\$nOK" ]]; then  
+  echo unverified > $SW_BLDDIR/status
+else
+  echo verified > $SW_BLDDIR/status
+fi
+chmod 664 $SW_BLDDIR/status
+
+JOBID=\`echo \$PBS_JOBID | cut -d "." -f1 \`
+cat \$PBS_JOBNAME.o\$JOBID >> ${SW_BLDDIR}/test.log
+chmod 664 ${SW_BLDDIR}/test.log
+
+rm -f ${SW_BLDDIR}/.running
+EOF
+
+qsub ${PACKAGE}.pbs > ${SW_BLDDIR}/.running
+if [ $? -ne 0 ] ; then
+  echo "Error submitting job"
+  rm -f .running
+  exit 1
+else
+  echo "Job submitted"
+  cat ${SW_BLDDIR}/.running
+  exit 2
+fi
+  
+################################ if this far, return 0
+exit 0

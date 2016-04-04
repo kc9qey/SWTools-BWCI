@@ -1,0 +1,40 @@
+0. DL 7/22/15
+Installing v15May15 required to change the rebuild script since some things are different. I had to disable two modules QUIP and PYTHON to get it to compile. QUIP needs to be downloaded manually and I prefered not to.
+NOTE: The code seems it does not to be modified anymore as Reuben had done iit in the past. 
+
+
+1. The following packages in LAMMPS are disabled because they either depends on
+more external libraries, irrelevant to Darter (e.g. GPU, CUDA), or seemed to
+be causing trouble:
+
+make no-gpu
+make no-kim
+make no-voronoi
+make no-user-atc
+make no-user-awpmd
+make no-user-cuda
+make no-user-molfile
+
+(reubendb, 2013-08-02)
+
+2. This version of lammps (1Feb14) contains bugs that causes compilation to
+fail with:
+./pair_adp_omp.cpp(203): error: class "LAMMPS_NS::ThrData" has no member
+"timer"
+      thr->timer(Timer::PAIR);
+           ^
+../pair_adp_omp.cpp(203): error: incomplete type is not allowed
+      thr->timer(Timer::PAIR);
+
+../pair_adp_omp.cpp(221): error: class "LAMMPS_NS::ThrData" has no member
+"timer"
+      thr->timer(Timer::PAIR);
+           ^
+../pair_adp_omp.cpp(221): error: incomplete type is not allowed
+      thr->timer(Timer::PAIR);
+
+The solution is just to delete those two lines. This is done in rebuild
+script. See also: http://lammps.sandia.gov/threads/msg41047.html
+
+Future version may fix this, and thus rebuild script needs to be adjusted to
+remove the line deletion (line 131 in rebuild).

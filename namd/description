@@ -1,0 +1,31 @@
+<h1>NAMD</h1>
+
+<p> Category:  Science Apps-Molecular Dynamics
+
+<h2>Description</h2>
+
+<a href="http://www.ks.uiuc.edu/Research/namd/">NAMD</a> 
+is a parallel molecular dynamics code designed for high-performance 
+simulation of large biomolecular systems. Based on Charm++ parallel objects, 
+NAMD scales to hundreds of processors on high-end parallel platforms and tens 
+of processors on commodity clusters using gigabit ethernet. 
+
+<p>
+Further information on NAMD can be found on
+<a href="http://www.ks.uiuc.edu/Research/namd/">NAMD website.</a>
+
+<h2>Use</h2>
+<p>
+NAMD is available as a <a href="/computing-resources/modules">module</a>.
+The modulefile for NAMD sets up the necessary environmental variables
+for NAMD and updates PATH to include NAMD executables.
+<p>
+The executable <b>namd2</b> is available upon loading of the module 
+and may be used inside
+<a href="/computing-resources/darter/running_jobs#batch-scripts">
+job submission scripts</a>:
+
+<pre>
+module load namd
+aprun -n [nprocs] namd2 [other arguments]
+</pre>

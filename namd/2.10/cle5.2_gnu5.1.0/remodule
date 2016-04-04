@@ -1,0 +1,25 @@
+  ### Set Environment (do not remove this line only change what is in between)
+  . ${MODULESHOME}/init/ksh
+  module unload PrgEnv-pgi
+  module unload PrgEnv-cray
+  module unload PrgEnv-gnu
+  module load PrgEnv-gnu
+  module swap gcc gcc/5.1.0
+  module load rca
+  ### End Environment (do not remove this line only change what is in between)
+  
+# load any other dependent modules here
+module load craype-hugepages8M
+module load fftw
+# env vars here
+
+PACKAGE=namd
+
+TCL_VER=8.5.9  #-- TCL version must be compatible to NAMD version
+NAMD_VER=2.10
+NAMD_SRCDIR=NAMD_${NAMD_VER}_Source
+CHARM_SRCDIR=charm-*
+#-- Cray (annoyingly) sets FFTW_DIR one level too deep for our purpose
+FFTW3_DIR=`dirname $FFTW_DIR`
+
+# these may need to go up in the special section between ###
