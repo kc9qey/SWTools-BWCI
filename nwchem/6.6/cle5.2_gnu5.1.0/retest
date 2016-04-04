@@ -42,7 +42,7 @@ set -o verbose
 #clear out status file
 rm -f status
 
-cp /sw/testcases/nwchem/* $SW_WORKDIR/
+cp /sw/sources/${PACKAGE}/testcases/* $SW_WORKDIR/
 
 cp -a $SW_BLDDIR/data $SW_WORKDIR/
 cp -a $SW_BLDDIR/etc $SW_WORKDIR/
