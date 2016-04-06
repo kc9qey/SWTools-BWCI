@@ -1,0 +1,35 @@
+  ### Set Environment (do not remove this line only change what is in between)
+  . ${MODULESHOME}/init/ksh
+  module unload PrgEnv-intel
+  module unload PrgEnv-cray
+  module unload PrgEnv-gnu
+  module load PrgEnv-gnu
+  module swap gcc gcc/4.9.1
+  ### End Environment (do not remove this line only change what is in between)
+ 
+  PACKAGE=silo
+  VERSION=4.9.1
+  SRCDIR=$PACKAGE-$VERSION
+
+# load any other module here
+
+module load cray-hdf5
+
+export F77=gfortran
+export F90=gfortran
+export F9X=gfortran
+export FC=gfortran
+export F9X=gfortran
+export CC=gcc
+export CXX=g++
+
+#export CRAYPE_LINK_TYPE=static
+#
+#export F77=ftn
+#export F90=ftn
+#export F9X=ftn
+#export FC=ftn
+#export F9X=ftn
+#export CC=cc
+#export CXX=CC
+module load cray-mpich-compat/v7

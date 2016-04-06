@@ -1,0 +1,12 @@
+
+Source downloaded from : http://www.physics.utah.edu/~detar/milc/milc_qcd-7.7.11.tar.gz
+
+
+tar –zxf milc-nsf.tar.gz
+cd milc-nsf/scripts
+./build
+# should return OK
+# edit pbs files to fix some fixed paths (perhaps)
+qsub small.pbs
+# out file should have 
+OK

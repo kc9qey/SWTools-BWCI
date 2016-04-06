@@ -1,0 +1,111 @@
+#!/bin/ksh
+
+############################## standard interface to /sw tools
+# Input:
+#   Environment variables
+#     SW_BLDDIR    current directory (PWD) minus /autofs/na1_ stuff
+#     SW_ENVFILE   file to be sourced which has alternate prog environment
+#                     only to be used in special circumstances
+#     SW_WORKDIR   unique work dir that local script can use
+# Output
+#   Return code of 0=success or 1=failure 
+##############################
+
+if [ -z $SW_BLDDIR ]; then
+  echo "Error: SW_BLDDIR not set!"
+  exit 1
+else
+  cd $SW_BLDDIR
+fi
+
+if [ -z $SW_ENVFILE ]; then
+  ### Set Environment (do not remove this line only change what is in between)
+  . ${MODULESHOME}/init/ksh
+  . ${SW_BLDDIR}/remodule
+  ### End Environment (do not remove this line only change what is in between)
+else
+  . $SW_ENVFILE
+fi
+
+############################## app specific section
+#  
+set -o verbose
+# clear out old installation to prevent potential libtool chmod 
+# commands from failing when reinstalled by another person
+rm -rf bin lib include status test.log $SRCDIR
+
+#clear out status file since re-making
+rm -f status
+
+tar -zxf /sw/sources/$PACKAGE/$VERSION/$SRCDIR.tar.gz
+cd $SRCDIR
+
+#PAtch test makefile
+#perl -pi -e 's/f77$/gfortran/g' $SRCDIR/tests/Makefile
+
+#make distclean
+
+./configure --prefix=$SW_BLDDIR \
+  --enable-fortran \
+  --enable-static \
+  --enable-optimization \
+  --disable-silex \
+  --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib \
+  --without-qt
+#./configure --prefix=$SW_BLDDIR \
+#  --enable-fortran \
+#  --enable-optimization \
+#  --disable-silex \
+#  --with-szlib=${SZIP_DIR} \
+#  --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
+#--disable-shared
+#--disable-fortran-compiler-check
+#--host=x86_64-unknown-linux-gnu
+if [ $? -ne 0 ] ; then
+  echo "$PACKAGE configure failed"
+  exit 1
+fi
+
+make
+  if [ $? -ne 0 ] ; then
+    echo "$PACKAGE make failed"
+    exit 1
+  fi
+
+make install
+if [ $? -ne 0 ] ; then
+  echo "$PACKAGE install failed"
+  exit 1
+fi
+
+#-- Fix mangled include file due to bug in Silo auto-generator
+cd $SW_BLDDIR/include
+#-- 1. sed: replace newline with @
+sed -i ':a;N;$!ba;s/\n/@/g' silo.inc
+#-- 2. sed: replace pattern with empty string ( (1) is necessary because sed
+#      pattern can't include newline
+sed -i "s/@     c//g" silo.inc
+#-- 3. tr: replace @ with newline
+tr @ '\n' < silo.inc > silo.inc.2
+mv silo.inc.2 silo.inc
+
+cd $SW_BLDDIR
+
+#-- Write pkg-config file
+mkdir -p $SW_BLDDIR/lib/pkgconfig
+cat > $SW_BLDDIR/lib/pkgconfig/${PACKAGE}.pc << EOF
+prefix=$SW_BLDDIR
+includedir=\${prefix}/include
+libdir=\${prefix}/lib
+
+Name: ${PACKAGE}
+Description: ${PACKAGE} Library
+URL: https://wci.llnl.gov/codes/silo/
+Version: $VERSION
+Cflags: -I\${includedir}  
+Libs: -L\${libdir} -lsiloh5 -lstdc++
+Requires.private: hdf5 >= 1.8.12
+EOF
+
+############################### if this far, return 0
+exit 0

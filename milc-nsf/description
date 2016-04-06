@@ -1,0 +1,31 @@
+<h1>The MIMD Lattice Computation (MILC) Collaboration</h1>
+
+<p> Category: Physics [HEP]
+
+<h2>Description</h2>
+
+<p> The benchmark code MILC represents part of a set of codes written by the
+MIMD Lattice Computation (MILC) collaboratoration used to study quantum
+chromodynamics (QCD), the theory of the strong interactions of subatomic
+physics. It performs simulations of four dimensional SU(3) lattice gauge
+theory on MIMD parallel machines. "Strong interactions" are responsible for
+binding quarks into protons and neutrons and holding them all together in the
+atomic nucleus.
+
+Reference:
+https://www.nersc.gov/users/computational-systems/cori/nersc-8-procurement/trinity-nersc-8-rfp/nersc-8-trinity-benchmarks/milc/
+
+This code was developed by the MILC collaboration.
+
+<h2>Use</h2>
+
+<p> Coming soon
+
+<pre>
+code
+code
+code
+code
+code
+</pre>
+
