@@ -60,17 +60,20 @@ module swap PrgEnv-cray PrgEnv-gnu
 module add craype-hugepages2M
 
 MILC_BIN=${SW_BLDDIR}/bin/su3_rmd
-#aprun -n 2048 \$MILC_BIN < large.in > ${PACKAGE}.out
-aprun -n 256 \$MILC_BIN < large.in > ${PACKAGE}.out
+#aprun -n 2048 \$MILC_BIN < large.in > ${PACKAGE}.log
+aprun -n 256 \$MILC_BIN < large.in > ${PACKAGE}.log
 
 #-- Check result
-${SW_BLDDIR}/${SRCDIR}/scripts/checkout ${PACKAGE}.out
+${SW_BLDDIR}/${SRCDIR}/scripts/checkout ${PACKAGE}.log
+
+tail -n 10 ${PACKAGE}.log | grep NERSC_TIME | awk '{print "YVALUE=",\$2}' \
+  | sed 's/ //g' > ${SW_BLDDIR}/wallclock
 
 JOBID=\`echo \$PBS_JOBID | cut -d "." -f1 \`
 chmod 775 ${SW_BLDDIR}/status
 rm ${SW_BLDDIR}/.running
 cat \${JOBID}.OU >> ${SW_BLDDIR}/test.log
-cat ${PACKAGE}.out >> ${SW_BLDDIR}/test.log
+cat ${PACKAGE}.log >> ${SW_BLDDIR}/test.log
 chmod 664 ${SW_BLDDIR}/test.log
 EOF
 
