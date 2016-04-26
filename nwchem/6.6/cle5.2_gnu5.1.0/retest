@@ -68,7 +68,7 @@ export NWCHEM_NWPW_LIBRARY=${SW_WORKDIR}/data/libraryps/
 export NWCHEM_BASIS_LIBRARY=${SW_WORKDIR}/data/libraries/
 export HOME_NWCHEMRC=${SW_WORKDIR}/etc
 
-aprun -n 256 nwchem Input_c240_pbe0.nw 2>&1 > nwchem.log
+aprun -n 256 nwchem Input_c240_pbe0.nw 2>&1 | tee -a ${SW_BLDDIR}/.running > nwchem.log
 
 if [[ "\$?" -eq 0 ]]; then  
   echo verified > $SW_BLDDIR/status

@@ -56,7 +56,7 @@ set -o verbose
 cd \$PBS_O_WORKDIR
 
 NAMD_BIN=${SW_BLDDIR}/bin/namd2
-aprun -n 4 \$NAMD_BIN apoa1.namd > apoa1.namd.out
+aprun -n 4 \$NAMD_BIN apoa1.namd | tee -a ${SW_BLDDIR}/.running > apoa1.namd.out
 total=\`grep "ENERGY:     500" apoa1.namd.out | cut -d" " -f73| cut -d. -f1\`
 echo \$total
 

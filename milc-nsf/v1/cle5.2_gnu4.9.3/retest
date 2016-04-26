@@ -61,7 +61,7 @@ module add craype-hugepages2M
 
 MILC_BIN=${SW_BLDDIR}/bin/su3_rmd
 #aprun -n 2048 \$MILC_BIN < large.in > ${PACKAGE}.log
-aprun -n 256 \$MILC_BIN < large.in > ${PACKAGE}.log
+aprun -n 256 \$MILC_BIN < large.in | tee ${PACKAGE}.log | tee -a ${SW_BLDDIR}/.running
 
 #-- Check result
 ${SW_BLDDIR}/${SRCDIR}/scripts/checkout ${PACKAGE}.log

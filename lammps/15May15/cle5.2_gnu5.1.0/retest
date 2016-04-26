@@ -64,7 +64,7 @@ chmod g+w ${SW_BLDDIR}/status
 
 
 LAMMPS_BIN=${SW_BLDDIR}/bin/lmp_xc30
-aprun -n 4 \$LAMMPS_BIN -in in.lj
+aprun -n 4 \$LAMMPS_BIN -in in.lj | tee -a ${SW_BLDDIR}/.running
 
 logsize=\`wc -c log.lammps | cut -f 1 -d " "\`
 if [[ \$logsize -ne 0 ]]; then
