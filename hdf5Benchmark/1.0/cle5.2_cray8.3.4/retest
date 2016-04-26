@@ -45,6 +45,17 @@ rm -f status
 
 cd $SW_WORKDIR
 
+#-- Four things are required in the PBS script such that it can be followed
+#   correctly by jenkins:
+#   1. The PBS_JOBID (given upon submission with 'qsub') needs to be written
+#      to the ${SW_BLDDIR}/.running file on submission
+#   2. The main output of the test (i.e. typically "aprun" command output)
+#      needs to be appended to ${SW_BLDDIR}/.running as the test runs
+#   3. If the test succeed, the first line of $SW_BLDDIR/status file must be 
+#      the string "verified"
+#   4. ${SW_BLDDIR}/.running must be removed after the test completes
+    
+
 cat > ${PACKAGE}.pbs << EOF
 #!/bin/bash
 #PBS -N ${PACKAGE}
@@ -58,7 +69,8 @@ module swap PrgEnv-cray PrgEnv-gnu
 module add craype-hugepages2M
 
 H5BIN=${SW_BLDDIR}/bin/hdf5Benchmark
-aprun -n 12 \$H5BIN | tee ${PACKAGE}.log
+aprun -n 12 \$H5BIN | tee ${PACKAGE}.log | tee -a ${SW_BLDDIR}/.running
+#aprun -n 12 \$H5BIN | tee -a ${SW_BLDDIR}/.running
 
 #-- Check result
 if [ -e RadHyd3D_output_000000010.h5 ]; then
@@ -80,7 +92,7 @@ EOF
 
 
 #submit job and touch .running file - marker to infrastructure that
-qsub ${PACKAGE}.pbs &> ${SW_BLDDIR}/.running
+qsub ${PACKAGE}.pbs 2>&1 > ${SW_BLDDIR}/.running
 
 # qsub returns 0 on successful job launch, so if failure return 1
 if [ $? -ne 0 ]; then
