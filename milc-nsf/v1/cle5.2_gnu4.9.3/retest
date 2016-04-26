@@ -79,7 +79,7 @@ EOF
 
 
 #submit job and touch .running file - marker to infrastructure that
-qsub ${PACKAGE}.pbs &> ${SW_BLDDIR}/.running
+qsub ${PACKAGE}.pbs 2>&1 ${SW_BLDDIR}/.running
 
 # qsub returns 0 on successful job launch, so if failure return 1
 if [ $? -ne 0 ]; then
