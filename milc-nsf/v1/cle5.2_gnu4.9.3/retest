@@ -64,7 +64,13 @@ MILC_BIN=${SW_BLDDIR}/bin/su3_rmd
 aprun -n 256 \$MILC_BIN < large.in | tee ${PACKAGE}.log | tee -a ${SW_BLDDIR}/.running
 
 #-- Check result
-${SW_BLDDIR}/${SRCDIR}/scripts/checkout ${PACKAGE}.log
+result=\$(${SW_BLDDIR}/${SRCDIR}/scripts/checkout ${PACKAGE}.log)
+if [ "\$result" == "OK" ]; then
+  echo "verified" > ${SW_BLDDIR}/status
+else
+  echo "unverified" > ${SW_BLDDIR}/status
+  echo \$result >> ${SW_BLDDIR}/status
+fi
 
 tail -n 10 ${PACKAGE}.log | grep NERSC_TIME | awk '{print "YVALUE=",\$2}' \
   | sed 's/ //g' > ${SW_BLDDIR}/wallclock
