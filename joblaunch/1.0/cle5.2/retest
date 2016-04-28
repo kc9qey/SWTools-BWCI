@@ -73,9 +73,11 @@ W_APRUN=`which aprun`
 R_APRUN=/usr/bin/aprun
 
 #-- Test with XALT's aprun wrapper
+echo "W_APRUN: \$W_APRUN" | tee -a ${SW_BLDDIR}/.running
 eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee w_aprun.log | tee -a ${SW_BLDDIR}/.running
 
 #-- Test with real aprun
+echo "R_APRUN: \$R_APRUN" | tee -a ${SW_BLDDIR}/.running
 eval \$TIME \$R_APRUN -n 1 \$UPTIME 2>&1 | tee r_aprun.log | tee -a ${SW_BLDDIR}/.running
 
 echo "verified" > ${SW_BLDDIR}/status
