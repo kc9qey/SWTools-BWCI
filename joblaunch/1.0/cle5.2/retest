@@ -68,9 +68,8 @@ cd \$PBS_O_WORKDIR
 TIME="/usr/bin/time -f 'elapsed %e'"
 UPTIME=/usr/bin/uptime
 
-module load xalt/0.7.1
-
 #-- Wrapped aprun and Real aprun:
+module load xalt/0.7.1
 export W_APRUN=\$(which aprun)
 export R_APRUN=/usr/bin/aprun
 
@@ -80,19 +79,57 @@ export R_APRUN=/usr/bin/aprun
 export XALT_TRANSMISSION_STYLE=directdb
 echo "W_APRUN: \$W_APRUN" | tee -a ${SW_BLDDIR}/.running
 echo "XALT_TRANSMISSION_STYLE: \$XALT_TRANSMISSION_STYLE" | tee -a ${SW_BLDDIR}/.running
-eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee x_aprun_directdb.log | tee -a ${SW_BLDDIR}/.running
+eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee x1_aprun_directdb.log | tee -a ${SW_BLDDIR}/.running
 
 #-- file
 export XALT_TRANSMISSION_STYLE=file
 echo "W_APRUN: \$W_APRUN" | tee -a ${SW_BLDDIR}/.running
 echo "XALT_TRANSMISSION_STYLE: \$XALT_TRANSMISSION_STYLE" | tee -a ${SW_BLDDIR}/.running
-eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee x_aprun_file.log | tee -a ${SW_BLDDIR}/.running
+eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee x1_aprun_file.log | tee -a ${SW_BLDDIR}/.running
 
 #-- syslog
 export XALT_TRANSMISSION_STYLE=syslog
 echo "W_APRUN: \$W_APRUN" | tee -a ${SW_BLDDIR}/.running
 echo "XALT_TRANSMISSION_STYLE: \$XALT_TRANSMISSION_STYLE" | tee -a ${SW_BLDDIR}/.running
-eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee x_aprun_syslog.log | tee -a ${SW_BLDDIR}/.running
+eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee x1_aprun_syslog.log | tee -a ${SW_BLDDIR}/.running
+
+export XALT_SW_ETC_DIR=\$XALT_ETC_DIR
+module unload xalt
+
+#-- Test with XALT in /tmp
+tar -xf /sw/sources/xalt/0.7.1/xalt-0.7.1.tar.gz
+cd xalt-0.7.1
+
+export XALT_DIR=/tmp/xalt_\${PBS_JOBID}
+export XALT_ETC_DIR=/tmp/xalt_\${PBS_JOBID}/etc
+./configure --prefix=\$XALT_DIR --with-etcDir=\$XALT_ETC_DIR
+make
+make install
+
+cd \$PBS_O_WORKDIR
+
+cp -a \$XALT_SW_ETC_DIR/* \$XALT_ETC_DIR/
+
+export W_APRUN=\$XALT_DIR/bin/aprun
+
+#-- directdb
+export XALT_TRANSMISSION_STYLE=directdb
+echo "W_APRUN: \$W_APRUN" | tee -a ${SW_BLDDIR}/.running
+echo "XALT_TRANSMISSION_STYLE: \$XALT_TRANSMISSION_STYLE" | tee -a ${SW_BLDDIR}/.running
+eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee x2_aprun_directdb.log | tee -a ${SW_BLDDIR}/.running
+
+#-- file
+export XALT_TRANSMISSION_STYLE=file
+echo "W_APRUN: \$W_APRUN" | tee -a ${SW_BLDDIR}/.running
+echo "XALT_TRANSMISSION_STYLE: \$XALT_TRANSMISSION_STYLE" | tee -a ${SW_BLDDIR}/.running
+eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee x2_aprun_file.log | tee -a ${SW_BLDDIR}/.running
+
+#-- syslog
+export XALT_TRANSMISSION_STYLE=syslog
+echo "W_APRUN: \$W_APRUN" | tee -a ${SW_BLDDIR}/.running
+echo "XALT_TRANSMISSION_STYLE: \$XALT_TRANSMISSION_STYLE" | tee -a ${SW_BLDDIR}/.running
+eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee x2_aprun_syslog.log | tee -a ${SW_BLDDIR}/.running
+
 
 #-- Test with real aprun
 echo "R_APRUN: \$R_APRUN" | tee -a ${SW_BLDDIR}/.running
@@ -100,14 +137,22 @@ eval \$TIME \$R_APRUN -n 1 \$UPTIME 2>&1 | tee r_aprun.log | tee -a ${SW_BLDDIR}
 
 echo "verified" > ${SW_BLDDIR}/status
 
-grep elapsed x_aprun_directdb.log | grep -v time | awk '{print "YVALUE=",\$2}' \
-  | sed 's/ //g' > ${SW_BLDDIR}/x_aprun_directdb
-grep elapsed x_aprun_file.log | grep -v time | awk '{print "YVALUE=",\$2}' \
-  | sed 's/ //g' > ${SW_BLDDIR}/x_aprun_file
-grep elapsed x_aprun_syslog.log | grep -v time | awk '{print "YVALUE=",\$2}' \
-  | sed 's/ //g' > ${SW_BLDDIR}/x_aprun_syslog
+grep elapsed x1_aprun_directdb.log | grep -v time | awk '{print "YVALUE=",\$2}' \
+  | sed 's/ //g' > ${SW_BLDDIR}/x1_aprun_directdb
+grep elapsed x1_aprun_file.log | grep -v time | awk '{print "YVALUE=",\$2}' \
+  | sed 's/ //g' > ${SW_BLDDIR}/x1_aprun_file
+grep elapsed x1_aprun_syslog.log | grep -v time | awk '{print "YVALUE=",\$2}' \
+  | sed 's/ //g' > ${SW_BLDDIR}/x1_aprun_syslog
+grep elapsed x2_aprun_directdb.log | grep -v time | awk '{print "YVALUE=",\$2}' \
+  | sed 's/ //g' > ${SW_BLDDIR}/x2_aprun_directdb
+grep elapsed x2_aprun_file.log | grep -v time | awk '{print "YVALUE=",\$2}' \
+  | sed 's/ //g' > ${SW_BLDDIR}/x2_aprun_file
+grep elapsed x2_aprun_syslog.log | grep -v time | awk '{print "YVALUE=",\$2}' \
+  | sed 's/ //g' > ${SW_BLDDIR}/x2_aprun_syslog
 grep elapsed r_aprun.log | grep -v time | awk '{print "YVALUE=",\$2}' \
   | sed 's/ //g' > ${SW_BLDDIR}/r_aprun
+  
+rm -rf \$XALT_DIR
 
 JOBID=\`echo \$PBS_JOBID | cut -d "." -f1 \`
 chmod 775 ${SW_BLDDIR}/status
