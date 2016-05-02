@@ -68,13 +68,31 @@ cd \$PBS_O_WORKDIR
 TIME="/usr/bin/time -f 'elapsed %e'"
 UPTIME=/usr/bin/uptime
 
+module load xalt/0.7.1
+
 #-- Wrapped aprun and Real aprun:
 W_APRUN=`which aprun`
 R_APRUN=/usr/bin/aprun
 
 #-- Test with XALT's aprun wrapper
+
+#-- directdb
+export XALT_TRANSMISSION_STYLE=directdb
 echo "W_APRUN: \$W_APRUN" | tee -a ${SW_BLDDIR}/.running
-eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee w_aprun.log | tee -a ${SW_BLDDIR}/.running
+echo "XALT_TRANSMISSION_STYLE: \$XALT_TRANSMISSION_STYLE" | tee -a ${SW_BLDDIR}/.running
+eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee x_aprun_directdb.log | tee -a ${SW_BLDDIR}/.running
+
+#-- file
+export XALT_TRANSMISSION_STYLE=file
+echo "W_APRUN: \$W_APRUN" | tee -a ${SW_BLDDIR}/.running
+echo "XALT_TRANSMISSION_STYLE: \$XALT_TRANSMISSION_STYLE" | tee -a ${SW_BLDDIR}/.running
+eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee x_aprun_file.log | tee -a ${SW_BLDDIR}/.running
+
+#-- syslog
+export XALT_TRANSMISSION_STYLE=syslog
+echo "W_APRUN: \$W_APRUN" | tee -a ${SW_BLDDIR}/.running
+echo "XALT_TRANSMISSION_STYLE: \$XALT_TRANSMISSION_STYLE" | tee -a ${SW_BLDDIR}/.running
+eval \$TIME \$W_APRUN -n 1 \$UPTIME 2>&1 | tee x_aprun_syslog.log | tee -a ${SW_BLDDIR}/.running
 
 #-- Test with real aprun
 echo "R_APRUN: \$R_APRUN" | tee -a ${SW_BLDDIR}/.running
@@ -82,8 +100,12 @@ eval \$TIME \$R_APRUN -n 1 \$UPTIME 2>&1 | tee r_aprun.log | tee -a ${SW_BLDDIR}
 
 echo "verified" > ${SW_BLDDIR}/status
 
-grep elapsed w_aprun.log | grep -v time | awk '{print "YVALUE=",\$2}' \
-  | sed 's/ //g' > ${SW_BLDDIR}/w_aprun
+grep elapsed x_aprun_directdb.log | grep -v time | awk '{print "YVALUE=",\$2}' \
+  | sed 's/ //g' > ${SW_BLDDIR}/x_aprun_directdb
+grep elapsed x_aprun_file.log | grep -v time | awk '{print "YVALUE=",\$2}' \
+  | sed 's/ //g' > ${SW_BLDDIR}/x_aprun_file
+grep elapsed x_aprun_syslog.log | grep -v time | awk '{print "YVALUE=",\$2}' \
+  | sed 's/ //g' > ${SW_BLDDIR}/x_aprun_syslog
 grep elapsed r_aprun.log | grep -v time | awk '{print "YVALUE=",\$2}' \
   | sed 's/ //g' > ${SW_BLDDIR}/r_aprun
 
