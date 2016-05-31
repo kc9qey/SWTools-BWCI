@@ -39,7 +39,6 @@ fi
 
 ############################## app specific section
 #  
-set -o verbose
 #clear out status file since re-testing
 rm -f status 
 
@@ -97,7 +96,8 @@ qsub ${PACKAGE}.pbs 2>&1 > ${SW_BLDDIR}/.running
 # qsub returns 0 on successful job launch, so if failure return 1
 if [ $? -ne 0 ]; then
   echo "Error submitting job"
-  rm -f .running
+  cat ${SW_BLDDIR}/.running
+  rm -f ${SW_BLDDIR}/.running
   exit 1
 else
   echo "Job submitted"
