@@ -52,7 +52,7 @@ cat > lammps.pbs << EOF
 #!/bin/bash
 #PBS -N lammps.rhodo
 #PBS -j oe
-#PBS -l nodes=1:ppn=32,walltime=10:00
+#PBS -l nodes=2:ppn=32,walltime=10:00
 
 set -o verbose
 cd \$PBS_O_WORKDIR
