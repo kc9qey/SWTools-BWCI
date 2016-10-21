@@ -59,7 +59,7 @@ cat > ${PACKAGE}.pbs << EOF
 #!/bin/bash
 #PBS -N ${PACKAGE}
 #PBS -j oe
-#PBS -l nodes=1:ppn=32,walltime=30:00
+#PBS -l nodes=2:ppn=32,walltime=30:00
 
 set -o verbose
 cd \$PBS_O_WORKDIR
